@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) 2013 Eugen Pechanec
+
+using System;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -291,16 +293,16 @@ namespace EugenPechanec.NativeWifi {
             [In, Optional] ref WlanRawData pIeData,
             [In, Out] IntPtr pReserved
         );
-        //[DllImport("wlanapi.dll")]
-        //internal static extern int WlanUIEditProfile(
-        //    [In] uint dwClientVersion,
-        //    [In, MarshalAs(UnmanagedType.LPWStr)] string wstrProfileName,
-        //    [In, MarshalAs(UnmanagedType.LPStruct)] Guid interfaceGuid,
-        //    [In] IntPtr hWnd,
-        //    [In] WlDisplayPages wlStartPage,
-        //    [In, Out] IntPtr pReserved,
-        //    [Out] out WlanReasonCode wlanReasonCode
-        //);
+        [DllImport("wlanui.dll")]
+        internal static extern int WlanUIEditProfile(
+            [In] uint dwClientVersion,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string wstrProfileName,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid interfaceGuid,
+            [In] IntPtr hWnd,
+            [In] WlDisplayPages wlStartPage,
+            [In, Out] IntPtr pReserved,
+            [Out] out WlanReasonCode wlanReasonCode
+        );
         //= WLAN PART 3 ===============================================================================
         [DllImport("wlanapi.dll")]
         internal static extern int WlanSetAutoConfigParameter(

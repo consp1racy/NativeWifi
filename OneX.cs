@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) 2013 Eugen Pechanec
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace EugenPechanec.NativeWifi {
