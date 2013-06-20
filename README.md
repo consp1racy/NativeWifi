@@ -5,13 +5,22 @@ C# managed version of Native Wi-Fi API present on Windows.
 
 Based on http://managedwifi.codeplex.com/ .
 
+The MIT License (MIT)
+Copyright (c) 2013 Ilya Konstantinov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 What was there?
-===============
+---------------
 WlanClient class which could enumerate Wlan interfaces,
   query their settings, profiles, scan and connect to networks.
 
 What is new?
-============
+------------
 Added OneX enums and structs.
 Renamed all enum values to conform to C# style.
 Added some functionality to WlanInterface (such as Disconnect).
@@ -24,7 +33,7 @@ Wi-Fi Direct API is started but not well described and well
 All events concerning Native Wi-fi.
 
 What has to be done?
-====================
+--------------------
 Complete XMLdoc.
 Fix LinkDemands warnings.
 Provide alternatives for structs containing Dot11CountryOrRegionString
