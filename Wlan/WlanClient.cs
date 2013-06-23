@@ -26,18 +26,19 @@ using NativeWifi;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using System.Security.Permissions;
 namespace EugenPechanec.NativeWifi.Wlan {
     public sealed class WlanClient : IDisposable {
 
         // FIELDS =================================================================
 
         internal IntPtr clientHandle;
-        
+
         private NativeMethods.WlanNotificationCallbackDelegate notificationCallbackDelegate;
 
         private Dictionary<Guid, WlanInterface> interfaceMap = new Dictionary<Guid, WlanInterface>();
         private volatile WlanInterface[] interfaceList;
-        
+
         private WlanHostedNetwork hostedNetwork = null;
         private object hostedNetworkLock = new Object();
 
@@ -63,6 +64,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         public AutoConfigClass AutoConfig { get; private set; }
 
         public WlanHostedNetwork HostedNetwork {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get {
                 if (hostedNetwork == null) {
                     lock (hostedNetworkLock) {
@@ -83,6 +85,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
 
         // CONSTRUCTORS, DESTRUCTOR ===============================================
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private void ReloadInterfaces() {
             IntPtr listPtr;
             Util.ThrowIfError(
@@ -159,6 +162,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <returns>Wlan Client instance.</returns>
         /// <exception cref="Win32Exception">On any error related to opening handle, registering notifications.</exception>
         /// <exception cref="EntryPointNotFound">When WlanApi is not available.</exception>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public static WlanClient CreateClient() {
             WlanClient client = new WlanClient();
             client.AutoConfig = new AutoConfigClass(client);
@@ -324,54 +328,47 @@ namespace EugenPechanec.NativeWifi.Wlan {
                 this.client = client;
             }
             public bool ShowDeniedNetworks {
-                get {
-                    return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.ShowDeniedNetworks);
-                }
-                set {
-                    SetAutoConfigParameter(WlanAutoConfOpcode.ShowDeniedNetworks, value);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.ShowDeniedNetworks); }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                set { SetAutoConfigParameter(WlanAutoConfOpcode.ShowDeniedNetworks, value); }
             }
             public WlanPowerSetting PowerSetting {
-                get {
-                    return (WlanPowerSetting)QueryAutoConfigParameter(WlanAutoConfOpcode.PowerSetting);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (WlanPowerSetting)QueryAutoConfigParameter(WlanAutoConfOpcode.PowerSetting); }
             }
             public bool OnlyUseGroupProfilesForAllowedNetworks {
-                get {
-                    return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.OnlyUseGroupProfilesForAllowedNetworks);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.OnlyUseGroupProfilesForAllowedNetworks); }
             }
             public bool AllowExplicitCredentials {
-                get {
-                    return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.AllowExplicitCredentials);
-                }
-                set {
-                    SetAutoConfigParameter(WlanAutoConfOpcode.AllowExplicitCredentials, value);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.AllowExplicitCredentials); }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                set { SetAutoConfigParameter(WlanAutoConfOpcode.AllowExplicitCredentials, value); }
             }
             public uint BlockPeriod {
-                get {
-                    return (uint)QueryAutoConfigParameter(WlanAutoConfOpcode.BlockPeriod);
-                }
-                set {
-                    SetAutoConfigParameter(WlanAutoConfOpcode.BlockPeriod, value);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (uint)QueryAutoConfigParameter(WlanAutoConfOpcode.BlockPeriod); }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                set { SetAutoConfigParameter(WlanAutoConfOpcode.BlockPeriod, value); }
             }
             public bool AllowVirtualStationExtensibility {
-                get {
-                    return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.AllowVirtualStationExtensibility);
-                }
-                set {
-                    SetAutoConfigParameter(WlanAutoConfOpcode.AllowVirtualStationExtensibility, value);
-                }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get { return (bool)QueryAutoConfigParameter(WlanAutoConfOpcode.AllowVirtualStationExtensibility); }
+                [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                set { SetAutoConfigParameter(WlanAutoConfOpcode.AllowVirtualStationExtensibility, value); }
             }
+
             #region AutoConfigInternal
+
             /// <summary>
             /// The function queries for the parameters of the auto configuration service.
             /// </summary>
             /// <param name="opcode">Property to be get.</param>
             /// <returns>Value type.</returns>
             /// <exception cref="Win32Exception">When error occurs during WlanApi call.</exception>
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             private ValueType QueryAutoConfigParameter(WlanAutoConfOpcode opcode) {
                 uint dataSize;
                 IntPtr data;
@@ -397,6 +394,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
                 }
                 return value;
             }
+
             /// <summary>
             /// The function sets parameters for the automatic configuration service.
             /// </summary>
@@ -404,6 +402,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             /// <param name="phy">Value to be set.</param>
             /// <exception cref="ArgumentException">If any parameter contains unacceptable phy.</exception>
             /// <exception cref="Win32Exception">When error occurs during WlanApi call.</exception>
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             private void SetAutoConfigParameter(WlanAutoConfOpcode opcode, object value) {
                 int dataSize = Marshal.SizeOf(value);
                 IntPtr data = Marshal.AllocHGlobal(dataSize);

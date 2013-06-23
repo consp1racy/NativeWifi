@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Net.NetworkInformation;
+using System.Security.Permissions;
 
 namespace EugenPechanec.NativeWifi {
     //= BASIC =========================================================================================

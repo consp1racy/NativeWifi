@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using System.Text;
 using System.Threading;
 namespace EugenPechanec.NativeWifi.Wlan {
@@ -53,12 +54,24 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </summary>
         /// <key><c>true</c> if "autoconf" is enabled; otherwise, <c>false</c>.</key>
         public bool AutoConfEnabled {
-            get {
-                return GetInterfaceInt(WlanIntfOpcode.AutoconfEnabled) != 0;
-            }
-            set {
-                SetInterfaceInt(WlanIntfOpcode.AutoconfEnabled, value ? 1 : 0);
-            }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (bool)QueryInterface(WlanIntfOpcode.AutoconfEnabled); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            set { SetInterface(WlanIntfOpcode.AutoconfEnabled, value); }
+        }
+
+        public bool BackgroundScanEnabled {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (bool)QueryInterface(WlanIntfOpcode.BackgroundScanEnabled); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            set { SetInterface(WlanIntfOpcode.BackgroundScanEnabled, value); }
+        }
+
+        public WlanRadioState RadioState {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (WlanRadioState)QueryInterface(WlanIntfOpcode.RadioState); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            set { SetInterface(WlanIntfOpcode.RadioState, value); }
         }
 
         /// <summary>
@@ -66,36 +79,50 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </summary>
         /// <key>The type of the BSS.</key>
         public Dot11BssType BssType {
-            get { return (Dot11BssType)GetInterfaceInt(WlanIntfOpcode.BssType); }
-            set { SetInterfaceInt(WlanIntfOpcode.BssType, (int)value); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (Dot11BssType)QueryInterface(WlanIntfOpcode.BssType); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            set { SetInterface(WlanIntfOpcode.BssType, value); }
         }
 
         /// <summary>
         /// Gets the state of the interface.
         /// </summary>
         /// <key>The state of the interface.</key>
-        public WlanInterfaceState State { get { return (WlanInterfaceState)GetInterfaceInt(WlanIntfOpcode.InterfaceState); } }
+        public WlanInterfaceState State {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (WlanInterfaceState)QueryInterface(WlanIntfOpcode.InterfaceState); }
+        }
 
         /// <summary>
         /// Gets the channel.
         /// </summary>
         /// <key>The channel.</key>
         /// <remarks>Not supported on Windows XP SP2.</remarks>
-        public int Channel { get { return GetInterfaceInt(WlanIntfOpcode.ChannelNumber); } }
+        public int Channel {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (int)QueryInterface(WlanIntfOpcode.ChannelNumber); }
+        }
 
         /// <summary>
         /// Gets the RSSI.
         /// </summary>
         /// <key>The RSSI.</key>
         /// <remarks>Not supported on Windows XP SP2.</remarks>
-        public int Rssi { get { return GetInterfaceInt(WlanIntfOpcode.Rssi); } }
+        public int Rssi {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (int)QueryInterface(WlanIntfOpcode.Rssi); }
+        }
 
         /// <summary>
         /// Gets the current operation mode.
         /// </summary>
         /// <key>The current operation mode.</key>
         /// <remarks>Not supported on Windows XP SP2.</remarks>
-        public Dot11OperationMode CurrentOperationMode { get { return (Dot11OperationMode)GetInterfaceInt(WlanIntfOpcode.CurrentOperationMode); } }
+        public Dot11OperationMode CurrentOperationMode {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return (Dot11OperationMode)QueryInterface(WlanIntfOpcode.CurrentOperationMode); }
+        }
 
         /// <summary>
         /// Gets the attributes of the current connection.
@@ -103,6 +130,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <key>The current connection attributes.</key>
         /// <exception cref="Win32Exception">An exception with code 0x0000139F (The group or resource is not in the correct state to perform the requested operation.) will be thrown if the interface is not connected to a network.</exception>
         public WlanConnectionAttributes CurrentConnection {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get {
                 uint valueSize;
                 IntPtr valuePtr;
@@ -191,7 +219,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// Attempts to connect using specified parameters. Method returns immediately. Progress is reported through <see cref="AcmConnectionCompleted"/> event.
         /// </summary>
         /// <param name="conParam">Structure containing connection parameters.</param>
-        /// <remarks><paramref name="conParam"/> must be prepared beforehand using <see cref="BuildConnectionParameters"/> and released afterwards using <see cref="DestroyConnectionParameters"/>.</remarks>
+        /// <remarks><paramref name="conParam"/> must be prepared beforehand using <see cref="CreateConnectionParameters"/> and released afterwards using <see cref="DestroyConnectionParameters"/>.</remarks>
         private void Connect(WlanConnectionParameters connectionParams) {
             Util.ThrowIfError(NativeMethods.WlanConnect(client.clientHandle, Guid, ref connectionParams, IntPtr.Zero));
         }
@@ -213,10 +241,11 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <param name="bssType">Value that indicates the BSS type of the network. If a profile is provided, this BSS type must be the same as the one in the profile.</param>
         /// <param name="ssid">Structure that specifies the SSID of the network to connect to. This parameter is optional. When set to <c>null</c>, all SSIDs in the profile will be tried. This parameter must not be <c>null</c> if <paramref name="mode"/> is set to <see cref="WlanConnectionMode.DiscoverySecure"/> or <see cref="WlanConnectionMode.DiscoveryUnsecure"/>.</param>
         /// <param name="flags">Windows XP with SP3 and Wireless LAN API for Windows XP with SP2:  This member must be set to 0.</param>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public void Connect(WlanConnectionMode mode, string profile, PhysicalAddress[] bssids, Dot11BssType bssType, Dot11Ssid? ssid, WlanConnectionFlags flags) {
             WlanConnectionParameters cp = new WlanConnectionParameters();
             try {
-                cp = BuildConnectionParameters(mode, profile, bssids, bssType, ssid, flags);
+                cp = CreateConnectionParameters(mode, profile, bssids, bssType, ssid, flags);
                 Connect(cp);
             } finally {
                 DestroyConnectionParameters(cp);
@@ -231,6 +260,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// If <paramref name="temporary"/> is set to <c>false</c> this field contains profile name.
         /// </param>
         /// <param name="temporary">Specifies whether to use a temporary or saved profile.</param>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public void Connect(string profile, bool temporary) {
             WlanConnectionMode mode = temporary ? WlanConnectionMode.TemporaryProfile : WlanConnectionMode.Profile;
             Connect(mode, profile, null, Dot11BssType.Any, null, 0);
@@ -241,6 +271,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </summary>
         /// <param name="ssid">SSID of a network to connect.</param>
         /// <param name="discoverySecure">Whether to use secure discovery.</param>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public void Connect(Dot11Ssid ssid, bool discoverySecure) {
             WlanConnectionMode mode = discoverySecure ? WlanConnectionMode.DiscoverySecure : WlanConnectionMode.DiscoveryUnsecure;
             Connect(mode, null, null, Dot11BssType.Any, ssid, 0);
@@ -282,6 +313,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </summary>
         /// <param name="profileName">The name of the profile.</param>
         /// <returns>The XML document.</returns>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public string GetProfileXml(string profileName) {
             IntPtr profileXmlPtr;
             WlanProfileFlags flags;
@@ -306,6 +338,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </param>
         /// <param name="temporary">Specifies whether to use a temporary or saved profile.</param>
         /// <returns>Value indicating whether connection attempt finished successfully within specified period of time.</returns>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public bool ConnectSync(string profile, bool temporary, int timeout) {
             WlanConnectionMode mode = temporary ? WlanConnectionMode.TemporaryProfile : WlanConnectionMode.Profile;
             return ConnectSync(mode, profile, null, Dot11BssType.Any, null, 0, timeout);
@@ -317,6 +350,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <param name="ssid">SSID of a network to connect.</param>
         /// <param name="discoverySecure">Whether to use secure discovery.</param>
         /// <returns>Value indicating whether connection attempt finished successfully within specified period of time.</returns>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public bool ConnectSync(Dot11Ssid ssid, bool discoverySecure, int timeout) {
             WlanConnectionMode mode = discoverySecure ? WlanConnectionMode.DiscoverySecure : WlanConnectionMode.DiscoveryUnsecure;
             return ConnectSync(mode, null, null, Dot11BssType.Any, ssid, 0, timeout);
@@ -340,11 +374,12 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <param name="ssid">Structure that specifies the SSID of the network to connect to. This parameter is optional. When set to <c>null</c>, all SSIDs in the profile will be tried. This parameter must not be <c>null</c> if <paramref name="mode"/> is set to <see cref="WlanConnectionMode.DiscoverySecure"/> or <see cref="WlanConnectionMode.DiscoveryUnsecure"/>.</param>
         /// <param name="flags">Windows XP with SP3 and Wireless LAN API for Windows XP with SP2:  This member must be set to 0.</param>
         /// <returns>Value indicating whether connection attempt finished successfully within specified period of time.</returns>
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public bool ConnectSync(WlanConnectionMode mode, string profile, PhysicalAddress[] bssids, Dot11BssType bssType, Dot11Ssid? ssid, WlanConnectionFlags flags, int timeout) {
             WlanConnectionParameters cp = new WlanConnectionParameters();
             bool value;
             try {
-                cp = BuildConnectionParameters(mode, profile, bssids, bssType, ssid, flags);
+                cp = CreateConnectionParameters(mode, profile, bssids, bssType, ssid, flags);
                 value = ConnectSync(cp, timeout);
             } finally {
                 DestroyConnectionParameters(cp);
@@ -358,18 +393,31 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <param name="conParam">Structure containing connection parameters.</param>
         /// <param name="timeout">Timeout after which method returns unsuccessfully.</param>
         /// <returns>Value indicating whether connection attempt finished successfully within specified period of time.</returns>
-        /// <remarks><paramref name="conParam"/> must be prepared beforehand using <see cref="BuildConnectionParameters"/> and released afterwards using <see cref="DestroyConnectionParameters"/>.</remarks>
+        /// <remarks><paramref name="conParam"/> must be prepared beforehand using <see cref="CreateConnectionParameters"/> and released afterwards using <see cref="DestroyConnectionParameters"/>.</remarks>
         private bool ConnectSync(WlanConnectionParameters conParam, int timeout) {
             Object key = new Object();
             bool value = false;
             bool quit = false;
 
-            AcmConnectionEventHandler handler = (sender, e) => {
+            AcmConnectionEventHandler successHandler = (sender, e) => {
                 lock (key) {
-                    //TODO if profile name equals
-                    value = true;
-                    quit = true;
-                    Monitor.Pulse(key);
+                    if (!quit) {
+                        //TODO if profile name equals
+                        value = true;
+                        quit = true;
+                        Monitor.Pulse(key);
+                    }
+                }
+            };
+
+            AcmConnectionEventHandler failureHandler = (sender, e) => {
+                lock (key) {
+                    if (!quit) {
+                        //TODO if profile name equals
+                        value = false;
+                        quit = true;
+                        Monitor.Pulse(key);
+                    }
                 }
             };
 
@@ -386,7 +434,8 @@ namespace EugenPechanec.NativeWifi.Wlan {
 
             try {
                 lock (key) {
-                    AcmConnectionCompleted += handler;
+                    AcmConnectionCompleted += successHandler;
+                    AcmConnectionAttemptFailed += failureHandler;
                     timer.Start();
                     Connect(conParam);
                     while (!quit)
@@ -394,7 +443,8 @@ namespace EugenPechanec.NativeWifi.Wlan {
                 }
             } finally {
                 timer.Stop();
-                AcmConnectionCompleted -= handler;
+                AcmConnectionCompleted -= successHandler;
+                AcmConnectionAttemptFailed -= failureHandler;
             }
             return value;
         }
@@ -409,7 +459,8 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// <para>Wrap call to this function in try-catch-finally. Place <see cref="DestroyConnectionParameters"/> in finally block.</para>
         /// <para>Parameter validity is described in <see cref="Connect"/> and <see cref="ConnectSync"/> methods.</para>
         /// </remarks>
-        private WlanConnectionParameters BuildConnectionParameters(WlanConnectionMode mode, string profile, PhysicalAddress[] bssids, Dot11BssType bssType, Dot11Ssid? ssid, WlanConnectionFlags flags) {
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        private static WlanConnectionParameters CreateConnectionParameters(WlanConnectionMode mode, string profile, PhysicalAddress[] bssids, Dot11BssType bssType, Dot11Ssid? ssid, WlanConnectionFlags flags) {
             WlanConnectionParameters cp = new WlanConnectionParameters();
             cp.BssType = bssType;
             cp.ConnectionMode = mode;
@@ -444,7 +495,8 @@ namespace EugenPechanec.NativeWifi.Wlan {
         /// </summary>
         /// <param name="cp">Structure whose resources will be released.</param>
         /// <remarks>Call to this method should be placed in a finally block.</remarks>
-        private void DestroyConnectionParameters(WlanConnectionParameters cp) {
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        private static void DestroyConnectionParameters(WlanConnectionParameters cp) {
             if (cp.DesiredBssidList != IntPtr.Zero) {
                 Marshal.FreeHGlobal(cp.DesiredBssidList);
                 cp.DesiredBssidList = IntPtr.Zero;
@@ -455,37 +507,68 @@ namespace EugenPechanec.NativeWifi.Wlan {
             }
         }
 
-        /// <summary>
-        /// Sets a parameter of the interface whose data type is <see cref="int"/>.
-        /// </summary>
-        /// <param name="opcode">The opcode of the parameter.</param>
-        /// <param name="key">The key to set.</param>
-        private void SetInterfaceInt(WlanIntfOpcode opCode, int value) {
-            IntPtr valuePtr = Marshal.AllocHGlobal(sizeof(int));
-            Marshal.WriteInt32(valuePtr, value);
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        private void SetInterface(WlanIntfOpcode opCode, Object value) {
+            IntPtr data;
+            int dataSize = Marshal.SizeOf(value);
+            data = Marshal.AllocHGlobal(dataSize);
+            switch (opCode) {
+                case WlanIntfOpcode.AutoconfEnabled:
+                case WlanIntfOpcode.BackgroundScanEnabled:
+                case WlanIntfOpcode.MediaStreamingMode:
+                case WlanIntfOpcode.CurrentOperationMode:
+                //Marshal.WriteInt32(data, Convert.ToInt32((uint)value));
+                //break;
+                case WlanIntfOpcode.BssType:
+                    Marshal.WriteInt32(data, (int)value);
+                    break;
+                case WlanIntfOpcode.RadioState:
+                    Marshal.StructureToPtr(value, data, false);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
             try {
-                Util.ThrowIfError(
-                    NativeMethods.WlanSetInterface(client.clientHandle, Guid, opCode, sizeof(int), valuePtr, IntPtr.Zero));
+                Util.ThrowIfError(NativeMethods.WlanSetInterface(client.clientHandle, Guid, opCode, (uint)dataSize, data, IntPtr.Zero));
             } finally {
-                Marshal.FreeHGlobal(valuePtr);
+                Marshal.FreeHGlobal(data);
             }
         }
 
-        /// <summary>
-        /// Gets a parameter of the interface whose data type is <see cref="int"/>.
-        /// </summary>
-        /// <param name="opcode">The opcode of the parameter.</param>
-        /// <returns>The integer key.</returns>
-        private int GetInterfaceInt(WlanIntfOpcode opCode) {
-            IntPtr valuePtr;
-            uint valueSize;
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        private Object QueryInterface(WlanIntfOpcode opCode) {
+            IntPtr data;
+            uint dataSize;
             WlanOpcodeValueType opcodeValueType;
-            Util.ThrowIfError(
-                NativeMethods.WlanQueryInterface(client.clientHandle, Guid, opCode, IntPtr.Zero, out valueSize, out valuePtr, out opcodeValueType));
+            Util.ThrowIfError(NativeMethods.WlanQueryInterface(client.clientHandle, Guid, opCode, IntPtr.Zero, out dataSize, out data, out opcodeValueType));
             try {
-                return Marshal.ReadInt32(valuePtr);
+                switch (opCode) {
+                    case WlanIntfOpcode.AutoconfEnabled:
+                    case WlanIntfOpcode.BackgroundScanEnabled:
+                    case WlanIntfOpcode.MediaStreamingMode:
+                    case WlanIntfOpcode.SupportedSafeMode:
+                    case WlanIntfOpcode.CertifiedSafeMode:
+                        return Convert.ToBoolean(Marshal.ReadByte(data));
+                    case WlanIntfOpcode.ChannelNumber:
+                    case WlanIntfOpcode.CurrentOperationMode:
+                    // type to uint
+                    case WlanIntfOpcode.Rssi:
+                    case WlanIntfOpcode.BssType:
+                    case WlanIntfOpcode.InterfaceState:
+                        return Marshal.ReadInt32(data);
+                    case WlanIntfOpcode.RadioState:
+                        return Marshal.PtrToStructure(data, typeof(WlanRadioState));
+                    case WlanIntfOpcode.CurrentConnection:
+                        return Marshal.PtrToStructure(data, typeof(WlanConnectionAttributes));
+                    case WlanIntfOpcode.SupportedInfrastructureAuthCipherPairs:
+                    case WlanIntfOpcode.SupportedAdhocAuthCipherPairs:
+                    case WlanIntfOpcode.SupportedCountryOrRegionStringList:
+                    case WlanIntfOpcode.Statistics:
+                    default:
+                        throw new NotSupportedException();
+                }
             } finally {
-                NativeMethods.WlanFreeMemory(valuePtr);
+                NativeMethods.WlanFreeMemory(data);
             }
         }
 

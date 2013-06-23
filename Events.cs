@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2013 Eugen Pechanec
 
 using System;
+using System.Security.Permissions;
 
 namespace EugenPechanec.NativeWifi {
 
@@ -147,6 +148,7 @@ namespace EugenPechanec.NativeWifi {
 
         public IhvEventArgs() : base(WlanNotificationSource.Ihv) { }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public T InterpretStruct<T>() where T : struct {
             return Util.ParseStruct<T>(Data, DataSize);
         }

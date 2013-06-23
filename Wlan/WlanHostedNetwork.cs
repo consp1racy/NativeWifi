@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using System.Text;
 namespace EugenPechanec.NativeWifi.Wlan {
     public sealed class WlanHostedNetwork {
@@ -30,26 +31,35 @@ namespace EugenPechanec.NativeWifi.Wlan {
         public bool Started { get { return State == WlanHostedNetworkState.Active; } }
 
         public bool Enabled {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return (bool)QueryProperty(WlanHostedNetworkOpcode.Enable); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             set { SetProperty(WlanHostedNetworkOpcode.Enable, value); }
         }
 
         private WlanHostedNetworkSecuritySettings SecuritySettings {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return (WlanHostedNetworkSecuritySettings)QueryProperty(WlanHostedNetworkOpcode.SecuritySettings); }
         }
 
         private WlanHostedNetworkConnectionSettings ConnectionSettings {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return (WlanHostedNetworkConnectionSettings)QueryProperty(WlanHostedNetworkOpcode.ConnectionSettings); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             set { SetProperty(WlanHostedNetworkOpcode.ConnectionSettings, value); }
         }
 
         public Key SecondaryKey {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return QuerySecondaryKey(); }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             set { SetSecondaryKey(value); }
         }
 
         public Dot11Ssid Ssid {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return ConnectionSettings.Ssid; }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             set {
                 WlanHostedNetworkConnectionSettings settings = ConnectionSettings;
                 settings.Ssid = value;
@@ -58,7 +68,9 @@ namespace EugenPechanec.NativeWifi.Wlan {
         }
 
         public int MaxNumberOfPeers {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get { return (int)ConnectionSettings.MaxNumberOfPeers; }
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             set {
                 WlanHostedNetworkConnectionSettings settings = ConnectionSettings;
                 settings.MaxNumberOfPeers = (uint)value;
@@ -66,9 +78,15 @@ namespace EugenPechanec.NativeWifi.Wlan {
             }
         }
 
-        public Dot11AuthAlgorithm AuthenticationAlgorithm { get { return SecuritySettings.AuthAlgo; } }
+        public Dot11AuthAlgorithm AuthenticationAlgorithm {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return SecuritySettings.AuthAlgo; }
+        }
 
-        public Dot11CipherAlgorithm CipherAlgorithm { get { return SecuritySettings.CipherAlgo; } }
+        public Dot11CipherAlgorithm CipherAlgorithm {
+            [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            get { return SecuritySettings.CipherAlgo; }
+        }
 
         /// <summary>
         /// Gets the network interface of this wireless interface.
@@ -107,6 +125,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             InitSettings();
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         public static WlanHostedNetwork CreateHostedNetwork(WlanClient client) {
             WlanHostedNetwork hnwk = new WlanHostedNetwork(client);
 
@@ -120,6 +139,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
 
         // METHODS =================================================================
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private void ReloadStatus() {
             WlanHostedNetworkPeerState[] peerList;
             WlanHostedNetworkStatus status = QueryStatus(out peerList);
@@ -178,6 +198,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
 
         // INTERNALS ===============================================================
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private WlanHostedNetworkStatus QueryStatus(out WlanHostedNetworkPeerState[] peerList) {
             IntPtr statusPtr;
             Util.ThrowIfError(NativeMethods.WlanHostedNetworkQueryStatus(client.clientHandle, out statusPtr, IntPtr.Zero));
@@ -190,6 +211,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             }
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private WlanHostedNetworkStatus ConvertHostedNetworkStatusPtr(IntPtr statusPtr, out WlanHostedNetworkPeerState[] peerList) {
             WlanHostedNetworkStatus status = (WlanHostedNetworkStatus)Marshal.PtrToStructure(statusPtr, typeof(WlanHostedNetworkStatus));
             uint numberOfItems = status.NumberOfPeers;
@@ -202,19 +224,22 @@ namespace EugenPechanec.NativeWifi.Wlan {
             return status;
         }
 
-        private void SetProperty(WlanHostedNetworkOpcode opCode, ValueType value) {
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        private void SetProperty(WlanHostedNetworkOpcode opCode, Object value) {
             IntPtr data;
             int dataSize = Marshal.SizeOf(value);
             data = Marshal.AllocHGlobal(dataSize);
             switch (opCode) {
                 case WlanHostedNetworkOpcode.ConnectionSettings:
                     Marshal.StructureToPtr(value, data, false);
-                    dataSize = Marshal.SizeOf(value);
+                    //dataSize = Marshal.SizeOf(value);
                     break;
                 case WlanHostedNetworkOpcode.Enable:
                     Marshal.WriteInt32(data, Convert.ToInt32(value));
-                    dataSize = sizeof(int);
+                    //dataSize = sizeof(int);
                     break;
+                default:
+                    throw new NotSupportedException();
             }
             try {
                 WlanOpcodeValueType opcodeValueType;
@@ -225,6 +250,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             }
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private Object QueryProperty(WlanHostedNetworkOpcode opCode) {
             IntPtr data;
             uint dataSize;
@@ -242,13 +268,14 @@ namespace EugenPechanec.NativeWifi.Wlan {
                     case WlanHostedNetworkOpcode.Enable:
                         return Convert.ToBoolean(Marshal.ReadByte(data));
                     default:
-                        return null;
+                        throw new NotSupportedException();
                 }
             } finally {
                 NativeMethods.WlanFreeMemory(data);
             }
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private Key QuerySecondaryKey() {
             uint keyLength;
             IntPtr keyData;
@@ -270,6 +297,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             }
         }
 
+        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private WlanHostedNetworkReason SetSecondaryKey(Key key) {
             IntPtr keyDataPtr;
             uint size;
@@ -314,7 +342,7 @@ namespace EugenPechanec.NativeWifi.Wlan {
             /// <summary>
             /// Gets length of the key. If key is binary, returns always <code>32</code>.
             /// </summary>
-            public int Length {get {if (IsPassPhrase) { return ((String)Data).Length; } else { return sizeof(int); }}}
+            public int Length { get { if (IsPassPhrase) { return ((String)Data).Length; } else { return sizeof(int); } } }
 
             /// <summary>
             /// Creates a new representation of hosted network secondary key.
